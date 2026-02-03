@@ -8,6 +8,7 @@ __all__ = [
     "Service",
     "Threat",
     "Safeguard",
+    "SafeguardLevel",
     "ServiceThreat",
     "LegalRule",
     "Evaluation",
