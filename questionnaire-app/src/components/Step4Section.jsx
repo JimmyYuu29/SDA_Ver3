@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 const CONCLUSIONS = [
   {
     id: 'conclusion_1',
@@ -33,7 +35,141 @@ const CONCLUSIONS = [
   },
 ]
 
+// Compute a recommended conclusion based on previous step answers
+function getRecommendation(formData) {
+  const { step1_2_answer, step1_3_answer, step1_4_answer, step1_5_answer, step1_6_answer } = formData
+
+  // Path: 1.2=SI, 1.3=SI → Option 3 (safeguards from legislation applied)
+  if (step1_2_answer === 'SI' && step1_3_answer === 'SI') {
+    return {
+      conclusion: 'conclusion_3',
+      option: 3,
+      reasons: [
+        'Paso 1.2: Es una incompatibilidad o prohibicion (SI)',
+        'Paso 1.3: Se dispone de las salvaguardas requeridas por la legislacion y se han aplicado adecuadamente (SI)',
+      ],
+    }
+  }
+
+  // Path: 1.2=SI, 1.3=NO, 1.4=SI → Option 4 (Art 5.1 RUE with safeguards)
+  if (step1_2_answer === 'SI' && step1_3_answer === 'NO' && step1_4_answer === 'SI') {
+    return {
+      conclusion: 'conclusion_4',
+      option: 4,
+      reasons: [
+        'Paso 1.2: Es una incompatibilidad o prohibicion (SI)',
+        'Paso 1.3: No se dispone de salvaguardas legales aplicables (NO)',
+        'Paso 1.4: Servicio Art. 5.1 RUE a controlada fuera de la UE con salvaguardas adecuadas (SI)',
+      ],
+    }
+  }
+
+  // Path: 1.2=SI, 1.3=NO, 1.4=NO, 1.5=SI → Option 5 (meets Art 37.2 RLAC)
+  if (step1_2_answer === 'SI' && step1_3_answer === 'NO' && step1_4_answer === 'NO' && step1_5_answer === 'SI') {
+    return {
+      conclusion: 'conclusion_5',
+      option: 5,
+      reasons: [
+        'Paso 1.2: Es una incompatibilidad o prohibicion (SI)',
+        'Paso 1.5: Cumple requisitos del Art. 37.2 RLAC para no ser considerado participacion en la gestion (SI)',
+      ],
+    }
+  }
+
+  // Path: 1.6=SI → Option 1 (absolute prohibition, don't enter)
+  if (step1_6_answer === 'SI') {
+    const reasons = []
+    if (step1_2_answer === 'SI') {
+      reasons.push('Paso 1.2: Es una incompatibilidad o prohibicion (SI)')
+    } else if (step1_2_answer === 'NO') {
+      reasons.push('Paso 1.2: No es una incompatibilidad formal (NO)')
+    }
+    reasons.push('Paso 1.6: Es una incompatibilidad o prohibicion absoluta sin salvaguardas posibles (SI)')
+    return {
+      conclusion: 'conclusion_1',
+      option: 1,
+      reasons,
+    }
+  }
+
+  // Path: 1.6=NO → went through Step 2 (and possibly Step 3)
+  if (step1_6_answer === 'NO') {
+    const threatKeys = [
+      'threat_selfInterest', 'threat_selfReview', 'threat_decisionMaking',
+      'threat_advocacy', 'threat_familiarity', 'threat_intimidation',
+    ]
+    const hasThreats = threatKeys.some(k => formData[k] === 'SI')
+
+    let hasMeasures = false
+    if (formData.step3_measures) {
+      try {
+        const parsed = JSON.parse(formData.step3_measures)
+        hasMeasures = Array.isArray(parsed) && parsed.length > 0
+      } catch {
+        hasMeasures = typeof formData.step3_measures === 'string' && formData.step3_measures.trim().length > 0
+      }
+    }
+
+    // No threats → Option 8
+    if (!hasThreats) {
+      return {
+        conclusion: 'conclusion_8',
+        option: 8,
+        reasons: [
+          'Paso 1.6: No es una incompatibilidad o prohibicion absoluta (NO)',
+          'Paso 2: No se han identificado amenazas significativas a la independencia',
+        ],
+      }
+    }
+
+    // Threats with safeguards → Option 7
+    if (hasThreats && hasMeasures) {
+      return {
+        conclusion: 'conclusion_7',
+        option: 7,
+        reasons: [
+          'Paso 1.6: No es una incompatibilidad o prohibicion absoluta (NO)',
+          'Paso 2: Se han identificado amenazas significativas',
+          'Paso 3: Se han aplicado medidas de salvaguarda',
+        ],
+      }
+    }
+
+    // Threats without safeguards → Option 6
+    if (hasThreats && !hasMeasures) {
+      return {
+        conclusion: 'conclusion_6',
+        option: 6,
+        reasons: [
+          'Paso 1.6: No es una incompatibilidad o prohibicion absoluta (NO)',
+          'Paso 2: Se han identificado amenazas significativas',
+          'Paso 3: No se han aplicado medidas de salvaguarda adecuadas',
+        ],
+      }
+    }
+  }
+
+  return null
+}
+
 function Step4Section({ formData, updateField }) {
+  const recommendation = useMemo(() => getRecommendation(formData), [
+    formData.step1_2_answer,
+    formData.step1_3_answer,
+    formData.step1_4_answer,
+    formData.step1_5_answer,
+    formData.step1_6_answer,
+    formData.threat_selfInterest,
+    formData.threat_selfReview,
+    formData.threat_decisionMaking,
+    formData.threat_advocacy,
+    formData.threat_familiarity,
+    formData.threat_intimidation,
+    formData.step3_measures,
+  ])
+
+  const isCustom = formData.step4_conclusion === 'conclusion_custom'
+
   return (
     <div className="section">
       <h2 className="section-title">PASO 4 - Conclusion Final</h2>
@@ -42,28 +178,80 @@ function Step4Section({ formData, updateField }) {
         Concluir, en base al analisis anterior, sobre el nivel de riesgo de falta de independencia y, por lo tanto, si la independencia de la firma de auditoria resulta o no comprometida (articulo 15 de la LAC y arts. 39 a 42 del RLAC).
       </div>
 
+      {/* Recommendation hint based on previous answers */}
+      {recommendation && (
+        <div className="recommendation-box">
+          <div className="recommendation-header">
+            <span className="recommendation-icon">💡</span>
+            <span className="recommendation-title">Sugerencia basada en el analisis previo: <strong>Opcion {recommendation.option}</strong></span>
+          </div>
+          <div className="recommendation-reasons">
+            <span className="recommendation-reasons-label">Basado en las siguientes respuestas:</span>
+            <ul className="recommendation-reasons-list">
+              {recommendation.reasons.map((reason, i) => (
+                <li key={i}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="recommendation-note">
+            Esta sugerencia es solo orientativa. Seleccione la conclusion que considere mas adecuada segun su analisis profesional.
+          </div>
+        </div>
+      )}
+
       <div className="warning-box">
         Solo se puede seleccionar una opcion. Seleccione la conclusion que corresponda segun el analisis realizado.
       </div>
 
       <div className="radio-group">
-        {CONCLUSIONS.map((c, idx) => (
-          <label
-            key={c.id}
-            className={`radio-option${formData.step4_conclusion === c.id ? ' selected' : ''}`}
-          >
-            <input
-              type="radio"
-              name="conclusion"
-              value={c.id}
-              checked={formData.step4_conclusion === c.id}
-              onChange={() => updateField('step4_conclusion', c.id)}
+        {CONCLUSIONS.map((c, idx) => {
+          const isRecommended = recommendation && recommendation.conclusion === c.id
+          return (
+            <label
+              key={c.id}
+              className={`radio-option${formData.step4_conclusion === c.id ? ' selected' : ''}${isRecommended ? ' recommended' : ''}`}
+            >
+              <input
+                type="radio"
+                name="conclusion"
+                value={c.id}
+                checked={formData.step4_conclusion === c.id}
+                onChange={() => updateField('step4_conclusion', c.id)}
+              />
+              <span className="radio-label">
+                <strong>Opcion {idx + 1}:</strong>
+                {isRecommended && <span className="recommended-badge">Sugerida</span>}
+                {' '}{c.text}
+              </span>
+            </label>
+          )
+        })}
+
+        {/* Opción 9 - Custom conclusion */}
+        <label
+          className={`radio-option${isCustom ? ' selected' : ''}`}
+        >
+          <input
+            type="radio"
+            name="conclusion"
+            value="conclusion_custom"
+            checked={isCustom}
+            onChange={() => updateField('step4_conclusion', 'conclusion_custom')}
+          />
+          <span className="radio-label">
+            <strong>Opcion 9:</strong> Otra conclusion (introducir manualmente).
+          </span>
+        </label>
+        {isCustom && (
+          <div className="custom-conclusion-input">
+            <textarea
+              className="large"
+              value={formData.step4_conclusion_custom || ''}
+              onChange={e => updateField('step4_conclusion_custom', e.target.value)}
+              placeholder="Introduzca su conclusion personalizada..."
             />
-            <span className="radio-label">
-              <strong>Opcion {idx + 1}:</strong> {c.text}
-            </span>
-          </label>
-        ))}
+          </div>
+        )}
       </div>
     </div>
   )

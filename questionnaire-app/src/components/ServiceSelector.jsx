@@ -124,7 +124,7 @@ function ServiceSelector({ formData, updateField }) {
       <div
         key={`${svc.categoryId}-${svc.code}`}
         className={`service-item ${isSelected ? 'selected' : ''} ${isProhibited ? 'prohibited' : ''}`}
-        onClick={() => !isProhibited ? selectService(svc) : null}
+        onClick={() => selectService(svc)}
       >
         <div className="service-item-main">
           {showPath && (
