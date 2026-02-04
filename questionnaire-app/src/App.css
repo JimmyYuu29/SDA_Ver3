@@ -291,6 +291,111 @@
   font-weight: 500;
 }
 
+.radio-option.recommended {
+  border-color: #81c784;
+  background: #f1f8e9;
+}
+
+.radio-option.recommended.selected {
+  border-color: #1a237e;
+  background: #e8eaf6;
+}
+
+.recommended-badge {
+  display: inline-block;
+  background: #4caf50;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Recommendation box */
+.recommendation-box {
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border: 2px solid #a5d6a7;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.recommendation-icon {
+  font-size: 1.3rem;
+}
+
+.recommendation-title {
+  font-size: 0.95rem;
+  color: #2e7d32;
+}
+
+.recommendation-reasons {
+  margin-bottom: 10px;
+}
+
+.recommendation-reasons-label {
+  font-size: 0.82rem;
+  color: #558b2f;
+  font-weight: 500;
+}
+
+.recommendation-reasons-list {
+  margin: 6px 0 0 20px;
+  padding: 0;
+  list-style: disc;
+}
+
+.recommendation-reasons-list li {
+  font-size: 0.82rem;
+  color: #33691e;
+  line-height: 1.6;
+}
+
+.recommendation-note {
+  font-size: 0.78rem;
+  color: #689f38;
+  font-style: italic;
+  border-top: 1px solid #c5e1a5;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* Custom conclusion input */
+.custom-conclusion-input {
+  margin-top: 8px;
+  margin-left: 30px;
+}
+
+.custom-conclusion-input textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.custom-conclusion-input textarea:focus {
+  outline: none;
+  border-color: #1a237e;
+  box-shadow: 0 0 0 3px rgba(26,35,126,0.1);
+}
+
 /* Checklist */
 .checklist-item {
   display: flex;
@@ -752,7 +857,13 @@
 }
 
 .service-item.prohibited {
-  opacity: 0.7;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.service-item.prohibited:hover {
+  border-color: #e57373;
+  background: #fff5f5;
 }
 
 .service-item-main {

@@ -390,6 +390,15 @@ export async function generateWord(formData) {
           ),
         ],
       }))
+    } else if (formData.step4_conclusion === 'conclusion_custom' && formData.step4_conclusion_custom) {
+      rows.push(new TableRow({
+        children: [
+          c(
+            [p([t(formData.step4_conclusion_custom, { color: DARK_TEAL })])],
+            { span: 2, bdr: MED_ALL, fill: GREEN_FILL, va: VerticalAlign.TOP }
+          ),
+        ],
+      }))
     } else {
       rows.push(new TableRow({
         children: [

@@ -78,6 +78,7 @@ const INITIAL_STATE = {
 
   // Step 4
   step4_conclusion: '',
+  step4_conclusion_custom: '',
 
   // Signatures
   analysisDate: '',
